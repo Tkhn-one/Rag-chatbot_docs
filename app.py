@@ -7,11 +7,12 @@ from config import (
     CHUNK_OVERLAP,
     CHUNK_SIZE,
     DB_DIR,
+    EMBEDDING_API_KEY,
+    LLM_API_KEY,
     LLM_BASE_URL,
     LLM_MODEL,
     LLM_PROVIDER,
     OLLAMA_MODEL,
-    OPENAI_API_KEY,
     TOP_K,
     UPLOAD_DIR,
 )
@@ -80,8 +81,8 @@ with st.sidebar:
     else:
         model_label = f"OpenAI ({LLM_MODEL})"
     st.caption(f"Провайдер: {provider_name()} · {model_label}")
-    if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
-        st.error("OPENAI_API_KEY не задан — впиши его в файл .env")
+    if LLM_PROVIDER == "openai" and not (LLM_API_KEY or EMBEDDING_API_KEY):
+        st.error("Ключи API не заданы — впиши их в файл .env")
 
     uploaded = st.file_uploader(
         "Загрузи файлы (PDF / DOCX / TXT)",

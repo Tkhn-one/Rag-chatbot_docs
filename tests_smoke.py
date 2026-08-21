@@ -128,9 +128,9 @@ def main():
         n = store.add_chunks(vs, chunks)
         assert n == len(chunks)
         assert store.collection_size(vs) == n
-        hits, _scores = store.search(vs, "рост продаж", k=2)
-        assert len(hits) == 2
-        print(f"База OK: добавили {n}, поиск вернул {len(hits)}")
+        results = store.search(vs, "рост продаж", k=2)
+        assert len(results) == 2
+        print(f"База OK: добавили {n}, поиск вернул {len(results)}")
         print("known sources:", store.known_sources(vs))
 
         store.delete_source(vs, "report.pdf")

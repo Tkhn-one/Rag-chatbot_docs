@@ -10,9 +10,10 @@ from config import (
     OLLAMA_EMBEDDING_MODEL,
     OLLAMA_MODEL,
     OPENAI_API_KEY,
-    OPENAI_MODEL,
     TEMPERATURE,
 )
+
+from .openai_embed import OpenAICompatEmbeddings
 
 
 def get_llm():
@@ -38,13 +39,10 @@ def get_llm():
 
 def get_embeddings():
     if LLM_PROVIDER == "openai":
-        from langchain_openai import OpenAIEmbeddings
-
-        # Эмбеддинги могут жить на другом сервисе, чем генерация
-        return OpenAIEmbeddings(
+        return OpenAICompatEmbeddings(
             model=EMBEDDING_MODEL,
             api_key=EMBEDDING_API_KEY or OPENAI_API_KEY,
-            base_url=EMBEDDING_BASE_URL,
+            base_url=EMBEDDING_BASE_URL or "https://api.openai.com/v1",
         )
 
     from langchain_ollama import OllamaEmbeddings
