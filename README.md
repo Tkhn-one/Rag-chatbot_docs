@@ -23,7 +23,7 @@
 - **ChromaDB** — векторная база, сохраняется в папку `db/`
 - **pypdf / python-docx** — чтение PDF и DOCX
 - Модель — на выбор:
-  - **OpenAI API** (GPT + эмбеддинги), если есть ключ;
+  - **Любой OpenAI-совместимый API** (OpenAI, Groq, OpenRouter, DeepSeek, Jina и т.п.) через один конфиг;
   - **Ollama** — локально и бесплатно, без ключей и без интернета после первого скачивания модели.
 
 ## Как это работает под капотом
@@ -147,6 +147,34 @@ LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-твой-ключ
 ```
 
+### Бесплатные OpenAI-совместимые API (без скачивания)
+
+Если ставить локальную модель не хочется, а платить за OpenAI — тем более, есть вариант вообще без установки моделей: бесплатные API с OpenAI-совместимым форматом. Работает это так: генерация ответов идёт через один сервис, а векторы — через другой (они могут не совпадать). Ниже готовый рабочий вариант на бесплатных лимитах.
+
+1. **Генерация — Groq** (https://console.groq.com). Регистрация, бесплатный ключ вида `gsk_...`. Без карты. Модель для ответов — `llama-3.3-70b-versatile`.
+2. **Эмбеддинги — Jina AI** (https://jina.ai/embeddings). Бесплатный ключ вида `jina_...`, к нему даётся пакет токенов. Модель — `jina-embeddings-v3` (хорошо понимает русский).
+
+Дальше в `.env` укажи оба сервиса:
+
+```
+LLM_PROVIDER=openai
+LLM_API_KEY=gsk_твой_ключ_groq
+LLM_BASE_URL=https://api.groq.com/openai/v1
+LLM_MODEL=llama-3.3-70b-versatile
+
+EMBEDDING_API_KEY=jina_твой_ключ
+EMBEDDING_BASE_URL=https://api.jina.ai/v1
+EMBEDDING_MODEL=jina-embeddings-v3
+```
+
+Альтернативы для генерации вместо Groq (тоже OpenAI-совместимы, меняешь только `LLM_*`):
+
+- **OpenRouter** — https://openrouter.ai, десятки бесплатных моделей с суффиксом `:free`, включая DeepSeek. Базовый URL `https://openrouter.ai/api/v1`.
+- **DeepSeek** — https://platform.deepseek.com, базовый URL `https://api.deepseek.com`, модель `deepseek-chat`.
+- **GitHub Models** — бесплатный доступ к GPT-4o и другим по OpenAI-совместимому API.
+
+Если хочешь использовать один и тот же ключ и сервис и для генерации, и для векторов — достаточно `OPENAI_API_KEY`, а `LLM_BASE_URL` / `EMBEDDING_BASE_URL` можно не заполнять (по умолчанию — `api.openai.com`).
+
 ### Шаг 3. Запуск
 
 ```bash
@@ -177,12 +205,18 @@ python tests_smoke.py
 | Переменная | За что отвечает | По умолчанию |
 | --- | --- | --- |
 | `LLM_PROVIDER` | `ollama` или `openai` | `ollama` |
+| `OPENAI_API_KEY` | ключ (OpenAI или любого совместимого API) | пусто |
+| `OPENAI_MODEL` | модель генерации | `gpt-4o-mini` |
+| `OPENAI_EMBEDDING_MODEL` | модель векторов | `text-embedding-3-small` |
+| `LLM_API_KEY` | отдельный ключ для генерации (если отличен от `OPENAI_API_KEY`) | = `OPENAI_API_KEY` |
+| `LLM_BASE_URL` | адрес API для генерации (Groq/OpenRouter/DeepSeek и т.п.) | пусто (OpenAI) |
+| `LLM_MODEL` | модель генерации для выбранного API | = `OPENAI_MODEL` |
+| `EMBEDDING_API_KEY` | отдельный ключ для векторов (например, Jina) | = `OPENAI_API_KEY` |
+| `EMBEDDING_BASE_URL` | адрес API для векторов | = `LLM_BASE_URL` |
+| `EMBEDDING_MODEL` | модель векторов для выбранного API | = `OPENAI_EMBEDDING_MODEL` |
 | `OLLAMA_MODEL` | модель генерации (Ollama) | `llama3.2` |
 | `OLLAMA_EMBEDDING_MODEL` | модель векторов (Ollama) | `nomic-embed-text` |
 | `OLLAMA_BASE_URL` | адрес локального сервера | `http://localhost:11434` |
-| `OPENAI_API_KEY` | ключ OpenAI | пусто |
-| `OPENAI_MODEL` | модель генерации (OpenAI) | `gpt-4o-mini` |
-| `OPENAI_EMBEDDING_MODEL` | модель векторов (OpenAI) | `text-embedding-3-small` |
 | `CHUNK_SIZE` | размер чанка в символах | `900` |
 | `CHUNK_OVERLAP` | перекрытие между чанками | `120` |
 | `TOP_K` | сколько фрагментов подаём модели | `4` |

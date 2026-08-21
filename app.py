@@ -4,15 +4,16 @@ import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage
 
 from config import (
+    CHUNK_OVERLAP,
+    CHUNK_SIZE,
     DB_DIR,
+    LLM_BASE_URL,
+    LLM_MODEL,
     LLM_PROVIDER,
     OLLAMA_MODEL,
     OPENAI_API_KEY,
-    OPENAI_MODEL,
     TOP_K,
     UPLOAD_DIR,
-    CHUNK_OVERLAP,
-    CHUNK_SIZE,
 )
 from rag import chat, chunking, loaders, store
 from rag.embeddings import get_embeddings, get_llm, provider_name
@@ -72,7 +73,12 @@ llm = _llm()
 # ---------- Боковая панель ----------
 with st.sidebar:
     st.title("📚 Документы")
-    model_label = f"Ollama ({OLLAMA_MODEL})" if LLM_PROVIDER == "ollama" else f"OpenAI ({OPENAI_MODEL})"
+    if LLM_PROVIDER == "ollama":
+        model_label = f"Ollama ({OLLAMA_MODEL})"
+    elif LLM_BASE_URL:
+        model_label = f"{LLM_BASE_URL} · {LLM_MODEL}"
+    else:
+        model_label = f"OpenAI ({LLM_MODEL})"
     st.caption(f"Провайдер: {provider_name()} · {model_label}")
     if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
         st.error("OPENAI_API_KEY не задан — впиши его в файл .env")
