@@ -23,6 +23,27 @@ PROMPT = ChatPromptTemplate.from_messages(
 _CITE_RE = re.compile(r"\[(\d+)\]")
 
 
+def _raise_helpful(exc):
+    """Превращает типичные ошибки API в понятные сообщения."""
+    text = str(exc)
+    if "model_not_found" in text or "does not exist" in text:
+        raise RuntimeError(
+            "Имя модели не найдено. Открой файл .env и проверь LLM_MODEL — "
+            "такой модели нет у выбранного сервиса (Groq/OpenRouter и т.п.). "
+            "Список доступных моделей смотри на сайте сервиса или в его консоли."
+        ) from exc
+    if "429" in text or "rate limit" in text.lower() or "quota" in text.lower():
+        raise RuntimeError(
+            "Превышен лимит запросов к API (429). Подожди немного или проверь "
+            "бесплатные лимиты выбранного сервиса."
+        ) from exc
+    if "authentication" in text.lower() or "invalid api key" in text.lower() or "401" in text:
+        raise RuntimeError(
+            "Неверный API-ключ. Проверь LLM_API_KEY / EMBEDDING_API_KEY в файле .env."
+        ) from exc
+    raise exc
+
+
 def answer(llm, vectorstore, history, question, k):
     """Ищет релевантные фрагменты и генерирует ответ с источниками.
 
@@ -43,7 +64,10 @@ def answer(llm, vectorstore, history, question, k):
         question=question,
     )
 
-    response = llm.invoke(messages)
+    try:
+        response = llm.invoke(messages)
+    except Exception as exc:
+        _raise_helpful(exc)
     answer_text = response.content
 
     sources = []
