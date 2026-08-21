@@ -21,6 +21,16 @@ PROMPT = ChatPromptTemplate.from_messages(
 )
 
 _CITE_RE = re.compile(r"\[(\d+)\]")
+_THINK_RE = re.compile(r"\s*<think>.*?</think>\s*", re.S | re.I)
+
+
+def _strip_thinking(text):
+    """Убирает блок рассуждений у думающих (reasoning) моделей.
+
+    Qwen/DeepSeek и похожие могут выводить <think>...</think> прямо в тексте ответа.
+    Нам это не нужно, поэтому вырезаем блок вместе с окружающими пробелами.
+    """
+    return _THINK_RE.sub("", text).strip()
 
 
 def _raise_helpful(exc):
@@ -68,7 +78,7 @@ def answer(llm, vectorstore, history, question, k):
         response = llm.invoke(messages)
     except Exception as exc:
         _raise_helpful(exc)
-    answer_text = response.content
+    answer_text = _strip_thinking(response.content)
 
     sources = []
     seen = set()
